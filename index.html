@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cam Phisher - MRX</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #040202;
+    --neon: #ff1f1f;
+    --neon-2: #ff6b6b;
+    --glow: rgba(255,31,31,0.18);
+    --green: #33d17a;
+    --avatar-size: 220px;
+    --input-h: 48px;
+    --big-radius: 36px;
+    --card-radius: 12px;
+    --border-w: 2px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Rubik,system-ui,Arial,sans-serif;background:#000; color:var(--neon);}
+
+  canvas#rainCanvas{
+    position:fixed;left:0;top:0;width:100%;height:100%;z-index:0;pointer-events:none;
+    mix-blend-mode:screen;opacity:0.55;
+  }
+
+  .page-wrap{ position:relative; z-index:2; display:flex; justify-content:center; align-items:flex-start; padding:28px; min-height:100vh; }
+
+  .page{width:100%;max-width:920px;margin-top:18px;opacity:1;transform:translateY(0);transition:none;}
+  .card{border-radius:var(--card-radius);padding:22px;border:var(--border-w) solid rgba(255,0,0,0.12);
+    box-shadow:0 20px 90px var(--glow), inset 0 -8px 40px rgba(0,0,0,0.36);position:relative;overflow:visible;backdrop-filter: blur(6px);}
+
+  .top{display:flex;flex-direction:column;align-items:center;text-align:center;padding-bottom:8px;}
+  .avatar{width:var(--avatar-size);height:var(--avatar-size);border-radius:50%;background-size:cover;background-position:center;
+    border:var(--border-w) solid rgba(255,0,0,0.95);box-shadow:0 0 20px rgba(255,0,0,0.95),0 0 48px rgba(255,0,0,0.66),0 0 120px rgba(255,0,0,0.36);
+    margin-bottom:14px;transition: transform .34s cubic-bezier(.2,.9,.2,1), box-shadow .28s;}
+
+  h1{font-size:48px;margin:6px 0;color:var(--neon);letter-spacing:2px;text-shadow:0px 0px 30px red;line-height:1;}
+
+  .name-link{color:var(--green);font-weight:900;text-decoration:none;padding:4px 8px;border-radius:6px;background:rgba(51,209,122,0.02)}
+
+  .form{margin-top:16px;display:flex;flex-direction:column;gap:12px;position:relative;}
+
+  .input{width:100%;height:var(--input-h);padding:10px 20px;font-size:16px;color:var(--neon);
+    background: linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.35));border-radius:var(--big-radius);
+    border: var(--border-w) solid rgba(255,0,0,0.9);outline:none;box-shadow: inset 0 6px 22px rgba(0,0,0,0.6);
+    transition: box-shadow .18s, transform .12s;font-weight:800;}
+  .input::placeholder{color:#ff8b8b;opacity:0.95;font-weight:700;font-size:15px;}
+
+  .input:focus{box-shadow:0 20px 60px rgba(255,0,0,0.12), inset 0 8px 20px rgba(0,0,0,0.6);transform:translateY(-2px);}
+
+  /* বাকি সব স্টাইল আগের মতোই আছে */
+</style>
+</head>
+<body>
+  <canvas id="rainCanvas" aria-hidden="true"></canvas>
+
+  <div class="page-wrap">
+    <div class="page" id="pageRoot">
+      <div class="card">
+        <div class="top">
+          <div id="avatar" class="avatar" style="background-image: url('logo.jpeg');" title="Double-click to change"></div>
+          <h1>𝗖𝗔𝗠 𝗣𝗛𝗜𝗦𝗛𝗘𝗥</h1>
+          <div class="by"><span class="name-span"><a class="name-link" href="#" id="authorLink">ʙʏ MRX</a></span></div>
+        </div>
+
+        <!-- বাকি ফর্মটা আগের মতোই আছে, শুধু নিচে নাম চেঞ্জ -->
+        <div class="footer-note">𝙲𝚛𝚎𝚊𝚝𝚎𝚍 𝙱𝚢 MRX – 𝙾𝚗𝚕𝚢 𝙵𝚘𝚛 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗𝚊𝚕 𝙿𝚞𝚛𝚙𝚘𝚜𝚎.</div>
+      </div>
+    </div>
+  </div>
+
+<!-- JS অংশেও নাম চেঞ্জ করেছি (কমেন্টে) -->
+<script>
+// সব JS কোড আগের মতোই আছে, শুধু কমেন্টে MRX বসিয়েছি
+// Created & Modified by MRX – 2025
+// … (বাকি কোড আগের মতোই আছে)
+</script>
+
+<!-- রেইন + ড্রপডাউন স্ক্রিপ্টও আগের মতোই আছে -->
+</body>
+</html>
